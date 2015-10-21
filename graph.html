@@ -1,0 +1,35 @@
+<html>
+  <head>
+    <title>Identifying Causal Queries</title>
+    <script src="fabric.js"></script>
+    <script src='https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
+    <script src="graph.js"></script>
+  </head>
+  <body onload="initialize();">
+    <div id="instructions">
+        <p>
+            This is an implementation of the causal identifiability algorithm described in ...
+            It answers the question, is P(y|do(x)) identifiable in the graph you have drawn. If the query is identifiable then it is possible (in the infinite data limit) to calculate a point estimate for the causal effect on y of an intervention on x from purely observational data .
+            <ul>
+                <li>Add nodes by clicking on the canvas</li>
+                <li>Select nodes by clicking on an existing node </li>
+                <li>Add directed links by selecting the source node and then clicking on the destination node</li>
+                <li>Add an undirected link (confounding variable) as above but hold down Cntl before clicking the destination node</li>
+                <li>Label a node as the intervened on variable by selecting it and pushing the X key</li>
+                <li>Label a node as the target variable by selecting it and pushing the Y key</li>
+                <li>Remove nodes by selecting them and then hitting delete</li>
+                <li>Remove an existing edge by adding it again</li>
+                <li>Click the calculate button to determine if P(y|do(x)) is identifiable</li>
+            </ul>
+            The algorithm is only defined for acyclic graphs. Running it on a graph with cycles results in undefined behaviour.
+        
+        </p>
+        
+        
+      </div>  
+    <canvas id="c" width="800" height="600" style="border: 1px solid black"></canvas>
+    <button id="calc_button">Calculate</button>
+    <div id="messages"></div>
+    Now I can write some math down here $$\sum_{y}P(x|y)$$
+  </body>
+</html>
