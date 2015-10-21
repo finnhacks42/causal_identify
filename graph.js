@@ -186,14 +186,14 @@ var Node = fabric.util.createClass(fabric.Circle, {
 });
 
 function initialize() {
-var QUEUE = MathJax.Hub.queue;  // shorthand for the queue
+/*var QUEUE = MathJax.Hub.queue;  // shorthand for the queue
     var math = null;                // the element jax for the math output.
     QUEUE.Push(function () {
       math = MathJax.Hub.getAllJax("MathOutput")[0];
     });
     window.UpdateMath = function (TeX) {
       QUEUE.Push(["Text",math,"\\displaystyle{"+TeX+"}"]);
- }
+ }*/
  
  var graph = new Graph();
  var button2 = document.getElementById("calc_button");
