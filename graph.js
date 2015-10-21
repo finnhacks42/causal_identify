@@ -258,6 +258,7 @@ var Graph = fabric.util.createClass({
                     }
                 }
             } else {
+                var mevent = e.e;
                 // Clicked in open space, create new node.
                 this.createNode(e.e.clientX, e.e.clientY);
                 this.updateHash();
