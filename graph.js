@@ -186,8 +186,18 @@ var Node = fabric.util.createClass(fabric.Circle, {
 });
 
 function initialize() {
+var QUEUE = MathJax.Hub.queue;  // shorthand for the queue
+    var math = null;                // the element jax for the math output.
+    QUEUE.Push(function () {
+      math = MathJax.Hub.getAllJax("MathOutput")[0];
+    });
+    window.UpdateMath = function (TeX) {
+      QUEUE.Push(["Text",math,"\\displaystyle{"+TeX+"}"]);
+ }
+ 
  var graph = new Graph();
  var button2 = document.getElementById("calc_button");
+ 
  button2.addEventListener("click", function () {
      
       if (!graph.getNodeWithLabel('x')){
@@ -205,25 +215,20 @@ function initialize() {
      var messagesDiv = document.getElementById("messages");
      messagesDiv.innerHTML="";
      
+    
      if (result) {
-         var mess = MathJax.HTML.Element(
-             "div", {
-                 id: "MathDiv",
-                 style: {
-                     border: "1px solid",
-                     padding: "5px"
-                 }
-             }, ["Here is math: \\(x+1\\)",["br"],"and a display $$x+1\\over x-1$$"]
-         );
-         //"Query is identifiable $$P(y|do(x)) = "+result+"$$"
+          //UpdateMath("P(y|do(x)) = "+result);
+         messagesDiv.innerHTML = "Query is identifiable"
+         messagesDiv.style.color = "green";
      } else {
-         var mess = document.createElement("span");
-         mess.innerHTML = "Query is not identifiable"
-         mess.style.color = "red";
+         //UpdateMath("");
+         //var mess = document.createElement("span");
+         messagesDiv.innerHTML = "Query is not identifiable"
+         messagesDiv.style.color = "red";
      }
      
      
-     messagesDiv.appendChild(mess);
+     //messagesDiv.appendChild(mess);
      
  });
     
@@ -258,9 +263,9 @@ var Graph = fabric.util.createClass({
                     }
                 }
             } else {
-                var mevent = e.e;
+                
                 // Clicked in open space, create new node.
-                this.createNode(e.e.clientX, e.e.clientY);
+                this.createNode(e.e.offsetX, e.e.offsetY);
                 this.updateHash();
             }
             this.updateHash();
@@ -485,7 +490,7 @@ function assert(condition, message) {
 function math_sum(variables,without) {
     var sumOver = variables.filter(function(item){return !contains(without,item);});
     if (sumOver.length > 0){ 
-        return "\sum_{"+sumOver+"}";
+        return "\\sum_{"+sumOver+"}";
     }
     return "";
 }
