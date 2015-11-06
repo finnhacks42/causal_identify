@@ -9,10 +9,8 @@ var PERMITTED_LABELS = ['x', 'y'];
 var NOT_IDENTIFIABLE_ERROR = "Not identifiable";
 
 //TODO fix the fact that I lose node categories on refresh (ie which ones are x, y)
-
-//TODO - add check for cyclic graphs when calculate clicked. 
-//Allow setting of multiple x and y nodes.
-//Allow setting of z nodes
+//TODO test for slightly older browser version
+//TODO maybe have a panel of pre-made graphs to choose from.
 
 
 function removeFromArray(arr, elem) {
@@ -133,10 +131,10 @@ var Node = fabric.util.createClass(fabric.Circle, {
         //return ""+(this.label || this.nodeNumber);
     },
     
-    fillColor: function(label){
-        if (label.indexOf('x') != -1) {
+    fillColor: function(){
+        if (this.label.indexOf('x') != -1) {
             return NODE_X_COLOR;
-        } else if (label.indexOf('y') != -1) {
+        } else if (this.label.indexOf('y') != -1) {
             return NODE_Y_COLOR;
         } else {
             return NODE_DEFAULT_COLOR;
@@ -147,7 +145,7 @@ var Node = fabric.util.createClass(fabric.Circle, {
         this.callSuper('_render', ctx);
         var label = this.label || "unlabeled";
         ctx.font = '16px Helvetica';
-        this.fill = this.fillColor(label);
+        this.fill = this.fillColor();
         ctx.fillStyle = '#333';
         ctx.fillText(label, -this.width/6, -this.height/2 + 20);
     },
@@ -189,7 +187,7 @@ var Node = fabric.util.createClass(fabric.Circle, {
         this.canvas.renderAll();
     },
     endSelection: function() {
-        this.set({'fill': NODE_DEFAULT_COLOR});
+        this.set({'fill': this.fillColor()});
         this.canvas.renderAll();
     },
     remove: function() {
@@ -204,7 +202,7 @@ var Node = fabric.util.createClass(fabric.Circle, {
         this.canvas.remove(this);
     },
     serialize: function() {
-        return this.get('left') + ',' + this.get('top');
+        return this.get('left') + ',' + this.get('top')+","+this.get('label');
     }
 });
 
@@ -214,7 +212,7 @@ toastr.options = {
   "debug": false,
   "newestOnTop": false,
   "progressBar": false,
-  "positionClass": "toast-top-right",
+  "positionClass": "toast-top-left",
   "preventDuplicates": false,
   "onclick": null,
   "showDuration": "300",
@@ -258,6 +256,13 @@ var QUEUE = MathJax.Hub.queue;  // shorthand for the queue
       if (graphOk) {  
          var data = new GraphData();
          data.load(graph);
+         
+         try {
+             data.topologicalOrder();
+         } catch (e) {
+             toastr["error"]("Graph contains cycle(s)", "Error");
+             return;
+         }
 
          try {
             var distribution = new Distribution([],data.nodes());
@@ -468,21 +473,8 @@ var Graph = fabric.util.createClass({
             }
         }
         var hash = '#n=' + serializedNodes + '&c=' + serializedConnections;
-        for (var i = 0; i < PERMITTED_LABELS.length; i++) {
-            var label = PERMITTED_LABELS[i];
-            var node = this.getNodeWithLabel(PERMITTED_LABELS[i]);
-            if (node) {
-                hash += '&' + label + '=' + node.nodeNumber;
-            }
-        }
         this.currentHash = hash;
         window.location.hash = hash;
-    },
-    
-    createNode: function(x, y) {
-        var node = new Node(x, y, this.canvas, this.nodes.length,'z'+this.zCount);
-        this.zCount +=1;
-        this.nodes.push(node);
     },
     
     loadFromHash: function(hash) {
@@ -500,38 +492,37 @@ var Graph = fabric.util.createClass({
             if (values.length == 1 && values[0] == '') {
                 values = [];
             }
-            for (var j = 0; j < values.length; j++) {
-                values[j] = parseInt(values[j]);
-            }
             map[keyAndValue[0]] = values;
         }
         var serializedNodes = map['n'];
         if (!serializedNodes) {
             return;
         }
-        for (var i = 0; i < serializedNodes.length; i += 2) {
-            this.createNode(serializedNodes[i], serializedNodes[i + 1]);
+        for (var i = 0; i < serializedNodes.length; i += 3) {
+            var node = this.createNode(parseInt(serializedNodes[i]), parseInt(serializedNodes[i + 1]));
+            node.setLabel(serializedNodes[i+2]);
         }
         var serializedConnections = map['c'];
         if (!serializedConnections) {
             return;
         }
         for (var i = 0; i < serializedConnections.length; i += 3) {
-            var bidirectional = !!serializedConnections[i];
-            var fromNode = this.nodes[serializedConnections[i + 1]];
-            var toNode = this.nodes[serializedConnections[i + 2]];
+            var bidirectional = !!parseInt(serializedConnections[i]);
+            var fromNode = this.nodes[parseInt(serializedConnections[i + 1])];
+            var toNode = this.nodes[parseInt(serializedConnections[i + 2])];
             fromNode.toggleLineTo(toNode, bidirectional);
-        }
-        for (var i = 0; i < PERMITTED_LABELS.length; i++) {
-            var label = PERMITTED_LABELS[i];
-            var values = map[label];
-            if (values && values.length == 1) {
-                var node = this.nodes[values[0]];
-                this.applyLabelToNode(node, label);
-            }
         }
         this.canvas.renderAll();
     },
+    
+    createNode: function(x, y) {
+        var node = new Node(x, y, this.canvas, this.nodes.length,'z'+this.zCount);
+        this.zCount +=1;
+        this.nodes.push(node);
+        return node;
+    },
+    
+    
     
 });
 
