@@ -1,3 +1,19 @@
+.slick-slider {
+    margin-left: 50px;
+}
+
+.slider {
+     width: 600px;
+     height: 138px;
+}
+
+.graph {
+    height: auto; 
+    width: auto; 
+    max-width: 200px; 
+    max-height: 138px;
+}
+
 .myButton {
 	-moz-box-shadow:inset 0px 1px 0px 0px #97c4fe;
 	-webkit-box-shadow:inset 0px 1px 0px 0px #97c4fe;

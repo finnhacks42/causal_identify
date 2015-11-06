@@ -8,7 +8,7 @@ var Y = 'y';
 var PERMITTED_LABELS = ['x', 'y'];
 var NOT_IDENTIFIABLE_ERROR = "Not identifiable";
 
-//TODO fix the fact that I lose node categories on refresh (ie which ones are x, y)
+
 //TODO test for slightly older browser version
 //TODO maybe have a panel of pre-made graphs to choose from.
 
@@ -207,6 +207,68 @@ var Node = fabric.util.createClass(fabric.Circle, {
 });
 
 function initialize() {
+    
+var graphHashes = ["#n=222,186,x1,374,185,y1&c=0,0,1",
+"#n=222,186,x1,374,185,y1,294,80,z3&c=0,0,1,0,0,2,0,2,1,1,2,1",
+"#n=222,186,x1,374,185,y1,294,80,z3&c=0,0,1,0,2,0,0,2,1,1,2,1",
+"#n=222,186,x1,374,185,y1,294,80,z3&c=0,0,1,0,2,0,0,2,1,1,0,2",
+"#n=201,186,x1,391,185,y1,298,186,z1&c=0,0,2,1,0,1,0,2,1",
+"#n=202,185,x1,298,186,z1,392,187,z2,340,290,y1&c=0,0,1,0,0,3,1,0,2,0,1,2,0,1,3,1,1,3,0,2,3",
+"#n=263,246,x1,364,246,z1,461,245,y1,364,123,z2,412,187,z3&c=0,0,1,1,0,3,1,0,4,0,1,2,1,2,0,0,3,4,0,3,0,1,3,2,0,4,2",
+"#n=222,186,x1,374,185,y1&c=0,0,1,1,0,1"]; 
+
+var slide = $('.slider');
+for (var i=0; i < graphHashes.length; i++) {
+    var img = document.createElement('img');
+    img.src="graphs/graph"+(i+1)+".png";
+    img.className="graph";
+    img.graphHash = graphHashes[i];
+    slide.append(img);
+}
+
+var slick = $('.slider').slick({
+  infinite: true,
+  slidesToShow: 3,
+  slidesToScroll: 1,
+  arrows:true,
+  vertical:false,
+});
+    
+// On swipe event
+$('.slider').on('swipe', function(event, slick, direction){
+  console.log("swipe");
+  // left
+});
+
+// On edge hit
+$('.slider').on('edge', function(event, slick, direction){
+  console.log('edge was hit')
+});
+
+// On before slide change
+$('.slider').on('beforeChange', function(event, slick, currentSlide, nextSlide){
+  console.log("beforeChange");
+});
+    
+$('.slider').on('afterChange', function(event, slick, currentSlide, nextSlide){
+  console.log("afterChange");
+});
+
+$('.slider').on('click', function(event, slick, currentSlide, nextSlide){
+    var indx = event.toElement.attributes["data-slick-index"];
+    if (indx) {
+        var hash = graphHashes[parseInt(indx.value) % graphHashes.length];
+        window.location.hash = hash;
+    }
+    
+    console.log("click",event.toElement);
+    
+ 
+});
+
+    
+ 
+    
 toastr.options = {
   "closeButton": false,
   "debug": false,
