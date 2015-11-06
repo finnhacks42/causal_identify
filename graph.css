@@ -11,7 +11,7 @@
     height: auto; 
     width: auto; 
     max-width: 200px; 
-    max-height: 138px;
+    #max-height: 138px;
 }
 
 .myButton {

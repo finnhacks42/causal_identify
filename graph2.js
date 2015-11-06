@@ -220,9 +220,11 @@ var graphHashes = ["#n=222,186,x1,374,185,y1&c=0,0,1",
 var slide = $('.slider');
 for (var i=0; i < graphHashes.length; i++) {
     var img = document.createElement('img');
-    img.src="graphs/graph"+(i+1)+".png";
+    //img.src="graphs/graph"+(i+1)+".png";
+    var graph = new Graph(graphHashes[i]);
+    img.src = graph.canvas.toDataURL();
     img.className="graph";
-    img.graphHash = graphHashes[i];
+    //img.graphHash = graphHashes[i];
     slide.append(img);
 }
 
@@ -233,26 +235,6 @@ var slick = $('.slider').slick({
   arrows:true,
   vertical:false,
 });
-    
-// On swipe event
-$('.slider').on('swipe', function(event, slick, direction){
-  console.log("swipe");
-  // left
-});
-
-// On edge hit
-$('.slider').on('edge', function(event, slick, direction){
-  console.log('edge was hit')
-});
-
-// On before slide change
-$('.slider').on('beforeChange', function(event, slick, currentSlide, nextSlide){
-  console.log("beforeChange");
-});
-    
-$('.slider').on('afterChange', function(event, slick, currentSlide, nextSlide){
-  console.log("afterChange");
-});
 
 $('.slider').on('click', function(event, slick, currentSlide, nextSlide){
     var indx = event.toElement.attributes["data-slick-index"];
@@ -260,10 +242,6 @@ $('.slider').on('click', function(event, slick, currentSlide, nextSlide){
         var hash = graphHashes[parseInt(indx.value) % graphHashes.length];
         window.location.hash = hash;
     }
-    
-    console.log("click",event.toElement);
-    
- 
 });
 
     
@@ -365,13 +343,44 @@ var QUEUE = MathJax.Hub.queue;  // shorthand for the queue
 }
 
 var Graph = fabric.util.createClass({
-    initialize: function() {
-        this.canvas = this.__canvas = new fabric.Canvas('c', { selection: false });
+    initialize: function(staticData) {
+        var htmlCanvas = 'c';
+        if (staticData) {
+            htmlCanvas = null;
+        }
+        this.canvas = this.__canvas = new fabric.Canvas(htmlCanvas, { selection: false });
         fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
         
         this.resetState();
         
-       
+        if (staticData) {
+            this.loadFromHash(staticData);
+            var minX = Infinity;
+            var minY = Infinity;
+            var maxX = -Infinity;
+            var maxY = -Infinity;
+            for (var i = 0; i < this.nodes.length; i++) {
+                minX = Math.min(minX, this.nodes[i].left);
+                minY = Math.min(minY, this.nodes[i].top);
+                maxX = Math.max(maxX, this.nodes[i].left);
+                maxY = Math.max(maxY, this.nodes[i].top);
+            }
+            var margin = 3 * NODE_RADIUS;
+            var shiftX = margin - minX;
+            var shiftY = margin - minY;
+            for (var i = 0; i < this.nodes.length; i++) {
+                var node = this.nodes[i];
+                node.left += shiftX;
+                node.top += shiftY;
+                node.moved();
+            }
+            this.canvas.setWidth(maxX - minX + margin * 2);
+            this.canvas.setHeight(maxY - minY + margin * 2);
+            this.canvas.calcOffset();
+            this.canvas.renderAll();
+            return;
+        }
+        
         this.canvas.on('mouse:down', bind(function(e) {
             this.mouseDownTarget = e.target;
         }, this));
