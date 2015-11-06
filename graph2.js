@@ -215,7 +215,8 @@ var graphHashes = ["#n=222,186,x1,374,185,y1&c=0,0,1",
 "#n=201,186,x1,391,185,y1,298,186,z1&c=0,0,2,1,0,1,0,2,1",
 "#n=202,185,x1,298,186,z1,392,187,z2,340,290,y1&c=0,0,1,0,0,3,1,0,2,0,1,2,0,1,3,1,1,3,0,2,3",
 "#n=263,246,x1,364,246,z1,461,245,y1,364,123,z2,412,187,z3&c=0,0,1,1,0,3,1,0,4,0,1,2,1,2,0,0,3,4,0,3,0,1,3,2,0,4,2",
-"#n=222,186,x1,374,185,y1&c=0,0,1,1,0,1"]; 
+"#n=222,186,x1,374,185,y1&c=0,0,1,1,0,1",
+"#n=61,68,z1,64,168,z2,124,166,z3,168,77,z4,198,163,z5,250,78,z6,290,173,z7,318,83,z8,388,82,z9,387,173,z10,450,83,z11,447,179,z12&c=1,0,1,0,0,1,0,2,3,0,3,4,0,5,6,0,7,6,0,8,9,0,10,11,1,10,11"]; 
 
 var slide = $('.slider');
 for (var i=0; i < graphHashes.length; i++) {
@@ -273,6 +274,10 @@ var QUEUE = MathJax.Hub.queue;  // shorthand for the queue
     window.UpdateMath = function (TeX) {
       QUEUE.Push(["Text",math,"\\displaystyle{"+TeX+"}"]);
  }
+    
+ document.getElementById("clear_button").addEventListener('click', function() {
+    window.location.hash = ''; 
+ });
  
  var graph = new Graph();
  var button2 = document.getElementById("calc_button");
