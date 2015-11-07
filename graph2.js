@@ -238,7 +238,9 @@ var slick = $('.slider').slick({
 });
 
 $('.slider').on('click', function(event, slick, currentSlide, nextSlide){
-    var indx = event.toElement.attributes["data-slick-index"];
+    console.log(event);
+    var element = event.target;
+    var indx = element.attributes["data-slick-index"];
     if (indx) {
         var hash = graphHashes[parseInt(indx.value) % graphHashes.length];
         window.location.hash = hash;
