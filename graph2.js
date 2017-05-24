@@ -1,7 +1,17 @@
 var NODE_DEFAULT_COLOR = '#fff';
 var NODE_SELECTION_COLOR = '#00f';
+var NODE_X_COLOR = '#7094B8';
+var NODE_Y_COLOR = '#FF4D4D';
 var NODE_RADIUS = 20;
+var X = 'x';
+var Y = 'y';
 var PERMITTED_LABELS = ['x', 'y'];
+var NOT_IDENTIFIABLE_ERROR = "Not identifiable";
+
+
+//TODO test for slightly older browser version
+//TODO maybe have a panel of pre-made graphs to choose from.
+
 
 function removeFromArray(arr, elem) {
     for (var i = 0; i < arr.length; i++) {
@@ -96,7 +106,7 @@ var NodeConnection = fabric.util.createClass(fabric.Path, {
 });
 
 var Node = fabric.util.createClass(fabric.Circle, {
-    initialize: function(x, y, canvas, nodeNumber) {
+    initialize: function(x, y, canvas, nodeNumber,nodeLabel) {
         this.callSuper('initialize', {
             left: x,
             top: y,
@@ -108,6 +118,7 @@ var Node = fabric.util.createClass(fabric.Circle, {
         this.hasControls = false;
         this.hasBorders = false;
         this.nodeNumber = nodeNumber;
+        this.label = nodeLabel;
 
         this.connectionsOut = [];
         this.connectionsIn = [];
@@ -120,11 +131,21 @@ var Node = fabric.util.createClass(fabric.Circle, {
         //return ""+(this.label || this.nodeNumber);
     },
     
+    fillColor: function(){
+        if (this.label.indexOf('x') != -1) {
+            return NODE_X_COLOR;
+        } else if (this.label.indexOf('y') != -1) {
+            return NODE_Y_COLOR;
+        } else {
+            return NODE_DEFAULT_COLOR;
+        }
+    },
+    
     _render: function(ctx) {
         this.callSuper('_render', ctx);
-
-        var label = this.label || "z"+this.nodeNumber;
+        var label = this.label || "unlabeled";
         ctx.font = '16px Helvetica';
+        this.fill = this.fillColor();
         ctx.fillStyle = '#333';
         ctx.fillText(label, -this.width/6, -this.height/2 + 20);
     },
@@ -166,7 +187,7 @@ var Node = fabric.util.createClass(fabric.Circle, {
         this.canvas.renderAll();
     },
     endSelection: function() {
-        this.set({'fill': NODE_DEFAULT_COLOR});
+        this.set({'fill': this.fillColor()});
         this.canvas.renderAll();
     },
     remove: function() {
@@ -181,51 +202,144 @@ var Node = fabric.util.createClass(fabric.Circle, {
         this.canvas.remove(this);
     },
     serialize: function() {
-        return this.get('left') + ',' + this.get('top');
+        return this.get('left') + ',' + this.get('top')+","+this.get('label');
     }
 });
 
 function initialize() {
-/*var QUEUE = MathJax.Hub.queue;  // shorthand for the queue
+    
+var graphHashes = ["#n=222,186,x1,374,185,y1&c=0,0,1",
+"#n=222,186,x1,374,185,y1,294,80,z3&c=0,0,1,0,0,2,0,2,1,1,2,1",
+"#n=222,186,x1,374,185,y1,294,80,z3&c=0,0,1,0,2,0,0,2,1,1,2,1",
+"#n=222,186,x1,374,185,y1,294,80,z3&c=0,0,1,0,2,0,0,2,1,1,0,2",
+"#n=201,186,x1,391,185,y1,298,186,z1&c=0,0,2,1,0,1,0,2,1",
+"#n=202,185,x1,298,186,z1,392,187,z2,340,290,y1&c=0,0,1,0,0,3,1,0,2,0,1,2,0,1,3,1,1,3,0,2,3",
+"#n=263,246,x1,364,246,z1,461,245,y1,364,123,z2,412,187,z3&c=0,0,1,1,0,3,1,0,4,0,1,2,1,2,0,0,3,4,0,3,0,1,3,2,0,4,2",
+"#n=222,186,x1,374,185,y1&c=0,0,1,1,0,1",
+"#n=61,68,z1,64,168,z2,124,166,z3,168,77,z4,198,163,z5,250,78,z6,290,173,z7,318,83,z8,388,82,z9,387,173,z10,450,83,z11,447,179,z12&c=1,0,1,0,0,1,0,2,3,0,3,4,0,5,6,0,7,6,0,8,9,0,10,11,1,10,11"]; 
+
+var slide = $('.slider');
+for (var i=0; i < graphHashes.length; i++) {
+    var img = document.createElement('img');
+    //img.src="graphs/graph"+(i+1)+".png";
+    var graph = new Graph(graphHashes[i]);
+    img.src = graph.canvas.toDataURL();
+    img.className="graph";
+    //img.graphHash = graphHashes[i];
+    slide.append(img);
+}
+
+var slick = $('.slider').slick({
+  infinite: true,
+  slidesToShow: 3,
+  slidesToScroll: 1,
+  arrows:true,
+  vertical:false,
+});
+
+$('.slider').on('click', function(event, slick, currentSlide, nextSlide){
+    console.log(event);
+    var element = event.target;
+    var indx = element.attributes["data-slick-index"];
+    if (indx) {
+        var hash = graphHashes[parseInt(indx.value) % graphHashes.length];
+        window.location.hash = hash;
+    }
+});
+
+    
+ 
+    
+toastr.options = {
+  "closeButton": false,
+  "debug": false,
+  "newestOnTop": false,
+  "progressBar": false,
+  "positionClass": "toast-top-left",
+  "preventDuplicates": false,
+  "onclick": null,
+  "showDuration": "300",
+  "hideDuration": "1000",
+  "timeOut": "5000",
+  "extendedTimeOut": "1000",
+  "showEasing": "swing",
+  "hideEasing": "linear",
+  "showMethod": "fadeIn",
+  "hideMethod": "fadeOut"
+};   
+
+var QUEUE = MathJax.Hub.queue;  // shorthand for the queue
     var math = null;                // the element jax for the math output.
     QUEUE.Push(function () {
       math = MathJax.Hub.getAllJax("MathOutput")[0];
     });
     window.UpdateMath = function (TeX) {
       QUEUE.Push(["Text",math,"\\displaystyle{"+TeX+"}"]);
- }*/
+ }
+    
+ document.getElementById("clear_button").addEventListener('click', function() {
+    window.location.hash = ''; 
+ });
  
  var graph = new Graph();
  var button2 = document.getElementById("calc_button");
  
  button2.addEventListener("click", function () {
+      
+      var intervened = graph.getNodeLabelsWithLabelsContaining(X);
+      var target = graph.getNodeLabelsWithLabelsContaining(Y);
+      var graphOk = true;
      
-      if (!graph.getNodeWithLabel('x')){
-          alert("No node set as x");
-          return;
+      if (intervened.length < 1){
+          toastr["error"]("No nodes selected to intervene on", "Error"); 
+          graphOk = false;
       }
-      if (!graph.getNodeWithLabel('y')){
-          alert("No node set as y");
-          return;
-      }
-     var data = new GraphData();
-     data.load(graph);
-     console.log("Topological",data.topologicalOrder());
-     var result = data.query();
-     var messagesDiv = document.getElementById("messages");
-     messagesDiv.innerHTML="";
      
-    
-     if (result) {
-          //UpdateMath("P(y|do(x)) = "+result);
-         messagesDiv.innerHTML = "Query is identifiable"
-         messagesDiv.style.color = "green";
-     } else {
-         //UpdateMath("");
-         //var mess = document.createElement("span");
-         messagesDiv.innerHTML = "Query is not identifiable"
-         messagesDiv.style.color = "red";
-     }
+      if (target.length < 1){
+          toastr["error"]("No nodes selected as targets", "Error");
+          graphOk = false;
+      }
+     
+      if (graphOk) {  
+         var data = new GraphData();
+         data.load(graph);
+         
+         try {
+             data.topologicalOrder();
+         } catch (e) {
+             toastr["error"]("Graph contains cycle(s)", "Error");
+             return;
+         }
+
+         try {
+            var distribution = new Distribution([],data.nodes());
+            var result = identify(target,intervened,data,distribution);
+            console.log("result",result.toString());
+            result = result.toString();
+         } catch (e) {
+             if (e.message === NOT_IDENTIFIABLE_ERROR) {
+                 result = false;
+             } else {
+                 throw e;
+             }
+         }
+
+
+         var messagesDiv = document.getElementById("messages");
+         messagesDiv.innerHTML="";
+
+
+         if (result) {
+             UpdateMath(math_condition(target,[],[intervened])+"="+result);
+             messagesDiv.innerHTML = "";
+             messagesDiv.style.color = "green";
+         } else {
+             UpdateMath("");
+             //var mess = document.createElement("span");
+             messagesDiv.innerHTML = "Query is not identifiable"
+             messagesDiv.style.color = "red";
+         }
+      }
      
      
      //messagesDiv.appendChild(mess);
@@ -236,13 +350,44 @@ function initialize() {
 }
 
 var Graph = fabric.util.createClass({
-    initialize: function() {
-        this.canvas = this.__canvas = new fabric.Canvas('c', { selection: false });
+    initialize: function(staticData) {
+        var htmlCanvas = 'c';
+        if (staticData) {
+            htmlCanvas = null;
+        }
+        this.canvas = this.__canvas = new fabric.Canvas(htmlCanvas, { selection: false });
         fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
         
         this.resetState();
         
-       
+        if (staticData) {
+            this.loadFromHash(staticData);
+            var minX = Infinity;
+            var minY = Infinity;
+            var maxX = -Infinity;
+            var maxY = -Infinity;
+            for (var i = 0; i < this.nodes.length; i++) {
+                minX = Math.min(minX, this.nodes[i].left);
+                minY = Math.min(minY, this.nodes[i].top);
+                maxX = Math.max(maxX, this.nodes[i].left);
+                maxY = Math.max(maxY, this.nodes[i].top);
+            }
+            var margin = 3 * NODE_RADIUS;
+            var shiftX = margin - minX;
+            var shiftY = margin - minY;
+            for (var i = 0; i < this.nodes.length; i++) {
+                var node = this.nodes[i];
+                node.left += shiftX;
+                node.top += shiftY;
+                node.moved();
+            }
+            this.canvas.setWidth(maxX - minX + margin * 2);
+            this.canvas.setHeight(maxY - minY + margin * 2);
+            this.canvas.calcOffset();
+            this.canvas.renderAll();
+            return;
+        }
+        
         this.canvas.on('mouse:down', bind(function(e) {
             this.mouseDownTarget = e.target;
         }, this));
@@ -284,9 +429,12 @@ var Graph = fabric.util.createClass({
                 this.applyLabelToNode(this.selectedNode, 'x');
             } else if (e.keyIdentifier == 'U+0059') { // y
                 this.applyLabelToNode(this.selectedNode, 'y');
-            } else {
+            } else if (e.keyIdentifier == 'U+005A'){  
+                this.applyLabelToNode(this.selectedNode, 'z');
+            } else { 
                 return;
             }
+            this.updateNodeNumbers()
             this.endSelection();
             this.updateHash();
             this.canvas.renderAll();
@@ -310,6 +458,9 @@ var Graph = fabric.util.createClass({
         this.selectedNode = null;
         this.mouseDownTarget = null;
         this.currentHash = window.location.hash;
+        this.xCount =1;
+        this.yCount =1;
+        this.zCount=1;
     },
     endSelection: function() {
         if (this.selectedNode) {
@@ -317,6 +468,19 @@ var Graph = fabric.util.createClass({
             this.selectedNode = null;
         }
     },
+    
+    getNodeLabelsWithLabelsContaining: function(value) {
+        var result = [];
+        for (var i = 0; i < this.nodes.length; i++) {
+            var node = this.nodes[i];
+            if (node.label.indexOf(value) != -1) {
+                result.push(node.label);
+            }
+        }
+        return result;
+    },
+    
+    
     getNodeWithLabel: function(label) {
         for (var i = 0; i < this.nodes.length; i++) {
             var node = this.nodes[i];
@@ -347,8 +511,24 @@ var Graph = fabric.util.createClass({
         this.currentHash = hash;
     },
     updateNodeNumbers: function() {
+        this.xCount = 1;
+        this.yCount = 1;
+        this.zCount = 1;
         for (var i = 0; i < this.nodes.length; i++) {
-            this.nodes[i].nodeNumber = i;
+            var node = this.nodes[i];
+            var label = node.label;
+            node.nodeNumber = i;
+            
+            if (label.indexOf('x') != -1) {
+                node.setLabel('x'+this.xCount);
+                this.xCount +=1;
+            } else if (label.indexOf('y') != -1) {
+                node.setLabel('y'+this.yCount);
+                this.yCount +=1;
+            } else {
+                node.setLabel('z'+this.zCount);
+                this.zCount +=1
+            }
         }
     },
     updateHash: function() {
@@ -371,20 +551,10 @@ var Graph = fabric.util.createClass({
             }
         }
         var hash = '#n=' + serializedNodes + '&c=' + serializedConnections;
-        for (var i = 0; i < PERMITTED_LABELS.length; i++) {
-            var label = PERMITTED_LABELS[i];
-            var node = this.getNodeWithLabel(PERMITTED_LABELS[i]);
-            if (node) {
-                hash += '&' + label + '=' + node.nodeNumber;
-            }
-        }
         this.currentHash = hash;
         window.location.hash = hash;
     },
-    createNode: function(x, y) {
-        var node = new Node(x, y, this.canvas, this.nodes.length);
-        this.nodes.push(node);
-    },
+    
     loadFromHash: function(hash) {
         if (hash.length > 1 && hash[0] == '#') {
             hash = hash.slice(1);
@@ -400,38 +570,37 @@ var Graph = fabric.util.createClass({
             if (values.length == 1 && values[0] == '') {
                 values = [];
             }
-            for (var j = 0; j < values.length; j++) {
-                values[j] = parseInt(values[j]);
-            }
             map[keyAndValue[0]] = values;
         }
         var serializedNodes = map['n'];
         if (!serializedNodes) {
             return;
         }
-        for (var i = 0; i < serializedNodes.length; i += 2) {
-            this.createNode(serializedNodes[i], serializedNodes[i + 1]);
+        for (var i = 0; i < serializedNodes.length; i += 3) {
+            var node = this.createNode(parseInt(serializedNodes[i]), parseInt(serializedNodes[i + 1]));
+            node.setLabel(serializedNodes[i+2]);
         }
         var serializedConnections = map['c'];
         if (!serializedConnections) {
             return;
         }
         for (var i = 0; i < serializedConnections.length; i += 3) {
-            var bidirectional = !!serializedConnections[i];
-            var fromNode = this.nodes[serializedConnections[i + 1]];
-            var toNode = this.nodes[serializedConnections[i + 2]];
+            var bidirectional = !!parseInt(serializedConnections[i]);
+            var fromNode = this.nodes[parseInt(serializedConnections[i + 1])];
+            var toNode = this.nodes[parseInt(serializedConnections[i + 2])];
             fromNode.toggleLineTo(toNode, bidirectional);
-        }
-        for (var i = 0; i < PERMITTED_LABELS.length; i++) {
-            var label = PERMITTED_LABELS[i];
-            var values = map[label];
-            if (values && values.length == 1) {
-                var node = this.nodes[values[0]];
-                this.applyLabelToNode(node, label);
-            }
         }
         this.canvas.renderAll();
     },
+    
+    createNode: function(x, y) {
+        var node = new Node(x, y, this.canvas, this.nodes.length,'z'+this.zCount);
+        this.zCount +=1;
+        this.nodes.push(node);
+        return node;
+    },
+    
+    
     
 });
 
@@ -495,11 +664,226 @@ function math_sum(variables,without) {
     return "";
 }
 
+function math_condition(left,conditionsArray,doConditionsArray) {
+    var result = "P("+left;
+    var first = true;
+    for (var i = 0; i< conditionsArray.length; i++) {
+        var conditions = conditionsArray[i];
+        if (conditions.length > 0){
+            if (first) {
+                result +="|";
+                first = false;
+            } else {
+                result+=",";
+            }
+            result+=conditions;
+        }
+    }
+    if (doConditionsArray) {
+        for (var i = 0; i< doConditionsArray.length; i++) {
+            var conditions = doConditionsArray[i];
+            if (conditions.length > 0){
+                if (first) {
+                    result +="|";
+                    first = false;
+                } else {
+                    result+=",";
+                }
+
+                result+="do("+conditions+")";
+            }
+        }
+    }
+    
+    result +=")";
+    return result;
+}
+
+
+
+
+/** determine if P(y|do(x)) is identifiable in G. x and y are sets of nodes in G. **/
+function identify(y,x,g,P) {
+    console.log("P",P.toString());
+    var v = g.nodes();
+    // 1) If there are no variables on which to intervene
+    if (x.length === 0) {
+        return P.marginalize(v,y);//math_sum(v,y)+P;//"P("+y+")";
+    }
+    
+    //2) If there are variables that are not ancestors of targets, we can just marginalize them out.
+    var ancestorsOfY = g.ancestors(y);
+    if (_.difference(v,ancestorsOfY).length > 0){
+        var Pprime = P.marginalize(v,ancestorsOfY); //math_sum(v,ancestorsOfY)+P; // "P("+ancestorsOfY+")";//
+        return identify(y,_.intersection(x,ancestorsOfY),g.subgraph(ancestorsOfY),Pprime);
+    }
+    
+    //3) If there are variables on which intervening will have no effect on y given intervention on x.
+    var gDox = g.withoutEdgesInto(x);
+    var w = _.difference(_.difference(v,x),gDox.ancestors(y))
+    if (w.length > 0) {
+        return identify(y,_.union(x,w),g,P);
+    }
+    
+    var gMinusX = g.subgraph(_.difference(v,x));
+    var components = gMinusX.districts(); // districts of g_{v\x}
+    
+    //4) If problem decomposes
+    if (components.length > 1) { // problem decomposes
+        //var result = math_sum(v,_.union(y,x));
+        var result = new Distribution();
+        for (var i = 0; i < components.length; i++) {
+            var c = components[i];
+            var term = identify(c,_.difference(v,c),g,P);
+            console.log("term",i,term.toString());
+            result = result.product(term);
+            //result += identify(c,_.difference(v,c),g,P);
+        }
+        result = result.marginalize(v,_.union(y,x));
+        return result; 
+        
+    } else {
+        var S = _.difference(v,x);
+        var dg = g.districts()
+        
+        // 5) If D(G) = V
+        if (dg.length === 1) {
+            throw Error(NOT_IDENTIFIABLE_ERROR); 
+        }
+        
+        // 6) If S is a component of D(G)
+        if (_.find(dg, function(c){return sameElements(c,S);})) { 
+            var order = g.topologicalOrder();
+            var result = new Distribution();
+            for (var i = 0; i < S.length; i ++) {
+                var left = S[i];
+                var right = order.slice(0,order.indexOf(left));
+                result.addConditional(left,right);
+            }
+            result = result.marginalize(S,y); 
+            return result;
+            //return math_sum(S,y)+g.cfactor(S);
+        }
+        
+        
+        // 7) S is a subset of some component of D(G)
+        var Sprime = _.find(dg,function(c){return subsetOf(S,c);})
+        //var Pprime = "";
+        var Pprime = new Distribution();
+        var order = g.topologicalOrder();
+        for (var i = 0; i < Sprime.length; i ++) {
+            var variable = Sprime[i];
+            var precedent = order.slice(0,order.indexOf(variable));
+            var cond1 = _.intersection(Sprime,precedent);
+            var cond2 = _.difference(precedent,Sprime);
+            var cond = _.union(cond1,cond2); //TODO check this - I have not yet got the distriction between big and small conditioning ...
+            Pprime.addConditional(variable,cond);
+        }
+        return identify(y,_.intersection(x,Sprime),g.subgraph(Sprime),Pprime);
+        
+    }
+    
+}
+
+function math_sum(variables,without) {
+    var sumOver = variables.filter(function(item){return !contains(without,item);});
+    if (sumOver.length > 0){ 
+        return "\\sum_{"+sumOver+"}";
+    }
+    return "";
+}
+
+var Distribution = fabric.util.createClass({
+    initialize: function (terms, variables) {
+        this.terms = terms || [];
+        if (variables) {
+            this.addJoint(variables);
+        }
+    },
+
+    addJoint: function (variables) {
+        var joint = {
+            "variables": variables,
+            "category": "joint",
+            "toString": function () {
+                return "P(" + this.variables + ")";
+            }
+        };
+        this.terms.push(joint);
+    },
+
+    addConditional: function (left, right) {
+        var conditional = {
+            "left": left,
+            "right": right,
+            "category": "conditional",
+            "toString": function () {
+                var result = "P(" + this.left;
+                if (right.length > 0) {
+                    result += "|" + this.right;
+                }
+                result += ")";
+                return result;
+            }
+        };
+        this.terms.push(conditional);
+    },
+
+    addSum: function (sumOver) {
+        if (sumOver.length > 0) {
+            var sum = {
+                "sumOver": sumOver,
+                "category": "sum",
+                "toString": function() {
+                    return "\\sum_{"+sumOver+"}";
+                }
+            };
+            this.terms.push(sum);
+        }
+    },
+
+    marginalize: function (variables, without) {
+        var sumOver = _.difference(variables, without);
+
+        if (this.terms.length == 1 && this.terms[0].category == "joint") {
+            var variables = _.difference(this.terms[0].variables, sumOver);
+            return new Distribution([], variables);
+
+        } else {
+            var result = new Distribution(this.terms.slice());
+            result.addSum(sumOver);
+            return result;
+        }
+    },
+
+    product: function (distribution) {
+        var termsA = this.terms.slice();
+        var termsB = distribution.terms.slice();
+        return new Distribution(termsA.concat(termsB));
+    },
+
+    toString: function () {
+        result = "";
+        for (var i = this.terms.length - 1; i > -1; i--) {
+            result += this.terms[i].toString();
+        }
+        return result;
+    }
+});
+
 var GraphData = fabric.util.createClass({
     initialize: function () {
         this.children = {};
         this.parents = {};
         this.siblings = {};  
+    },
+    
+    nodes:function() {
+        return Object.keys(this.children).slice();
+    },
+    
+    distribution: function(){
+        return "P("+this.nodes()+")";  
     },
     
     load: function(graph) {
@@ -540,7 +924,7 @@ var GraphData = fabric.util.createClass({
         this.logToConsole();
     },
     
-     logToConsole: function() {
+    logToConsole: function() {
         console.log("GRAPH ---------------------")
         console.log("children:",JSON.stringify(this.children));
         console.log("parents:",JSON.stringify(this.parents));
@@ -563,9 +947,20 @@ var GraphData = fabric.util.createClass({
         return sg;
     },
     
-    /** returns all the ancestors of a node **/
+    /** returns a copy of this graph without the edges into the specified nodes **/
+    withoutEdgesInto: function(nodeSubset) {
+        var sg = this.subgraph(this.nodes());
+        for (var i = 0; i < nodeSubset.length; i++) {
+            var node = nodeSubset[i];
+            sg.parents[node] = [];
+            sg.siblings[node] = [];
+        }
+        return sg;
+    },
+    
+    /** returns all the ancestors of a node, includes specified node **/
     ancestors: function(nodes) {
-        var result = [];
+        var result = [].concat(nodes);
         var expanded = true;
         while (expanded) {
             var currentSize = result.length;
@@ -579,10 +974,6 @@ var GraphData = fabric.util.createClass({
             nodes = parents;
         }
         return result;
-    },
-    
-    An: function(nodes) {
-        return addUnique(this.ancestors(nodes),nodes);
     },
     
     topologicalOrder: function(){
@@ -616,81 +1007,6 @@ var GraphData = fabric.util.createClass({
         return ordered;
     },
     
-    identify: function(C,T,Q) {
-        console.log('Identify',C,T);
-        var G_T = this.subgraph(T);
-        var A = G_T.An(C);
-        console.log('A',A);
-        if (sameElements(A,C)) {
-            return math_sum(T,C)+Q;
-        }
-        if (sameElements(A,T)) {
-            return false;
-        }
-        if (subsetOf(C,A) & subsetOf(A,T)) {
-            var G_A = this.subgraph(A);
-            var components = G_A.districts();
-            var T2 = components.find(function(element, index, array){
-                return subsetOf(C,element);
-            });
-            
-            if (T2 == null) {
-                throw new Error('T2 should not be null');
-            }
-            
-            var Q2 = math_sum(T,A)+Q;
-            return this.identify(C,T2,Q2); 
-        }
-        
-        throw new Error('Unexpected state in identify');
-    },
-    
-    query:function() {
-        var components = this.districts();
-        console.log("components:"+ JSON.stringify(components));
-        
-        var c_factors = this.cfactors(components);
-        console.log("cfactors",c_factors);
-        
-        var S_x_indx = this.indexOfContainingComponent(components,'x');
-        var S_x = components[S_x_indx];
-        var Q_S_x = c_factors[S_x_indx];
-        
-        console.log("S_x:",S_x);
-        
-        var nodes = Object.keys(this.children);
-        var g_x = this.subgraph(nodes.filter(function(element){return element != 'x';}));
-        
-        var D = g_x.An('y');
-        console.log("D",D)
-        var D_x = intersection(D,S_x);
-        console.log("D_x",D_x);
-        var g_dx = this.subgraph(D_x);
-        var g_dx_components = g_dx.districts();
-        
-        var Dterms = "";
-        for (var i = 0; i < g_dx_components.length; i++) {
-            var D_xj = g_dx_components[i];
-            console.log("D_x_",i,D_xj);
-            var Q_D_xj = this.identify(D_xj,S_x,Q_S_x);
-            if (!Q_D_xj) {
-                return false;
-            }
-            Dterms += Q_D_xj;
-        }
-        
-        var term1 = math_sum(D,['y']);
-    
-        var term3 = "";
-        for (var i = 0; i < components.length; i++) {
-            if (i !== S_x_indx) {
-                term3 += math_sum(components[i],D)+c_factors[i];
-            }
-        }
-        
-        return term1+Dterms+term3;
-    },
-    
     indexOfContainingComponent: function(components,variable) {
        for (var i = 0; i < components.length; i++) {
            if (contains(components[i],variable)){
@@ -700,7 +1016,7 @@ var GraphData = fabric.util.createClass({
        return undefined;    
     },
     
-    getParents: function(nodes){
+    parentsOf: function(nodes){
         var result = [];
         for (var i = 0; i < nodes.length; i ++) {
             addUnique(result,this.parents[nodes[i]]);
@@ -708,30 +1024,17 @@ var GraphData = fabric.util.createClass({
         return result;
     },
     
-    cfactors:function(components) {
+    cfactor: function(component){
+        var result = "";
         var order = this.topologicalOrder();
-        var factors = [];
-        for (var i = 0; i < components.length; i++) {
-            var component = components[i];
-            var c_factor = "";
-            for (var j = 0; j < component.length; j++ ){
-                var variable = component[j];
-                var v_i = order.slice(0,order.indexOf(variable)+1);
-                var g_v_i = this.subgraph(v_i);
-                var T_i = g_v_i.districts().find(function(gvi_component){return contains(gvi_component,variable)});
-                var cond = this.getParents(T_i).filter(function(item){return item !== variable});
-                var term = "P("+variable;
-                if (cond.length > 0) {
-                    term +="|"+cond;
-                }
-                term += ")";
-                c_factor+=term;
-            }
-            factors.push(c_factor);
+        for (var i = 0; i < component.length; i++) {
+            var variable = component[i];
+            var cond = order.slice(0,order.indexOf(variable));
+            result += math_condition(variable,[cond]);
         }
-        return factors;
+        return result;
     },
-    
+        
     districts: function() {
         var assigned = [];
         var result = [];
@@ -764,4 +1067,7 @@ var GraphData = fabric.util.createClass({
     
     
 });
+
+
+
 

@@ -1,46 +1,63 @@
 <html>
-  <head>
-    <title>Identifying Causal Queries</title>
-    <script src="fabric.js"></script>
-    <script src="graph.js"></script>
-   <!--<script type="text/x-mathjax-config">
-  MathJax.Hub.Config({
-    tex2jax: {
-      inlineMath: [["$","$"],["\\(","\\)"]]
-    }
-  });
-</script>
-<script type="text/javascript"
-  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full">
-</script>  -->
-  </head>
-  <body onload="initialize();"> 
 
-    <canvas id="c" width="800" height="600" style="border: 1px solid black"></canvas>
-    <button id="calc_button">Calculate</button>
-   <!-- <div id="MathOutput">${}$</div>-->
-    
-    <div id="messages"></div>
-  
-      
-          <div id="instructions">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="toastr.css">
+    <link rel="stylesheet" type="text/css" href="slick/slick.css" />
+    <link rel="stylesheet" type="text/css" href="slick/slick-theme.css" />
+    <link rel="stylesheet" type="text/css" href="graph.css" />
+
+    <script src="fabric.js"></script>
+    <script src="underscore-min.js"></script>
+    <script src="jquery-2.1.4.min.js"></script>
+    <script src="toastr.min.js"></script>
+    <script src="graph2.js"></script>
+
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({ tex2jax: { inlineMath: [["$","$"],["\\(","\\)"]] } });
+    </script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full">
+    </script>
+    <script type="text/javascript" src="slick/slick.min.js"></script>
+    <title>Identifying Causal Queries</title>
+    <h1>Causal Identifiability</h1>
+</head>
+
+<body onload="initialize();" bgcolor="#E6E6FA">
+    <div id="instructions">
         <p>
-            This is an implementation of the causal identifiability algorithm described in <a href="http://web.cs.iastate.edu/~jtian/r290-L.pdf">J.Tian, J.Pearl, <i>On the Identification of Causal Effects</i></a>
-            It answers the question, is P(y|do(x)) identifiable in the graph you have drawn. If the query is identifiable then it is possible (in the infinite data limit) to calculate a point estimate for the causal effect on y of an intervention on x from purely observational data .
+            This is an implementation of the causal identifiability algorithm described in <a href="http://www.jmlr.org/papers/volume9/shpitser08a/shpitser08a.pdf">Ilya Shpitser and Judea Pearl, <i>Complete Identification Methods for the Causal Hierarchy</i></a> It answers the question, is P(y|do(x)) identifiable in the graph you have drawn. If the query is identifiable then it is possible (in the infinite data limit) to calculate a point estimate for the causal effect on y of an intervention on x from purely observational data .
             <ul>
+                <li>Pick a graph from the slider or draw your own</li>
                 <li>Add nodes by clicking on the canvas</li>
                 <li>Select nodes by clicking on an existing node </li>
                 <li>Add directed links by selecting the source node and then clicking on the destination node</li>
                 <li>Add an undirected link (confounding variable) as above but hold down Cntl before clicking the destination node</li>
                 <li>Label a node as the intervened on variable by selecting it and pushing the X key</li>
                 <li>Label a node as the target variable by selecting it and pushing the Y key</li>
+                <li>Remove a node from the target or intervened on variables by selecting it and pushing the Z key</li>
                 <li>Remove nodes by selecting them and then hitting delete</li>
                 <li>Remove an existing edge by adding it again</li>
-                <li>Click the calculate button to determine if P(y|do(x)) is identifiable</li>
             </ul>
-            The algorithm is only defined for acyclic graphs. Running it on a graph with cycles results in undefined behaviour.
-        
         </p>
-      </div> 
-  </body>
+    </div>
+
+    <div class="container">
+        <div class="slider">
+           
+        </div>
+    </div>
+
+    <div id="MathOutput">${}$</div>
+    <div id="messages"></div>
+
+    <div id="canvas">
+        <canvas id="c" width="700" height="400"></canvas>
+    </div>
+
+    <button id="calc_button" class="myButton">Calculate P(Y|do(X))</button>
+    <button id="clear_button" class="myButton">Clear Graph</button>
+
+</body>
+
 </html>
