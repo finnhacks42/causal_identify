@@ -417,7 +417,22 @@ var Graph = fabric.util.createClass({
         }, this));
         
         document.onkeydown = bind(function(e) {
-            if (e.keyIdentifier == 'U+007F') { // Delete
+            console.log(e.keyIdentifier)
+            var action = null;
+            if (e.key !== undefined) {
+                action = e.key
+                            
+            } else if (e.keyIdentifier !== undefined) {
+                var lookup = {'U+007F':"Delete",'U+0058':"x",'U+0059':y, 'U+005A':"z"}
+                action = lookup[e.keyIdentifier]
+  
+            } else if (e.keyCode !== undefined) {
+                var lookup = {88:"x",89:"y",90:"z",46:"Delete"};
+                action = lookup[e.keyCode];
+            }
+            
+            
+            if (action == 'Delete') {
                 // If we have a selected node, remove it.
                 if (this.selectedNode) {
                     removeFromArray(this.nodes, this.selectedNode);
@@ -425,11 +440,11 @@ var Graph = fabric.util.createClass({
                     this.updateNodeNumbers();
                     this.selectedNode = null;
                 }
-            } else if (e.keyIdentifier == 'U+0058') { // x
+            } else if (action == 'x') { 
                 this.applyLabelToNode(this.selectedNode, 'x');
-            } else if (e.keyIdentifier == 'U+0059') { // y
+            } else if (action == 'y') { 
                 this.applyLabelToNode(this.selectedNode, 'y');
-            } else if (e.keyIdentifier == 'U+005A'){  
+            } else if (action =='z'){  
                 this.applyLabelToNode(this.selectedNode, 'z');
             } else { 
                 return;
